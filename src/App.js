@@ -1,6 +1,8 @@
-import { useReducer } from 'react';
-// import { useRef } from 'react';
+import { useReducer, useCallback, useMemo } from 'react';
+// import { useRef, useState } from 'react';
 import './App.css';
+import AddTodo from './addTodo';
+import Todos from './Todos';
 // import Test from './test';
 
 function reducer(state, action) {
@@ -20,32 +22,51 @@ function reducer(state, action) {
           action.todo
         ]
       }
+      case 'SET_SEACRH':
+        return{
+          ...state,
+          search: action.value
+      }
   }
 }
 
 function App() {
+  console.log('App rendered.');
+
   const [state, dispatch] = useReducer(reducer, {
     todos: [],
-    todo: ''
+    todo: '',
+    search: ''
   })
 
   // const [todos, setTodos] = useState([]);
   // const [todo, setTodo] = useState();
-  const submitHandle = e => {
+  const submitHandle = useCallback(e => {
     e.preventDefault();
     dispatch({
       type: 'ADD_TODO',
       todo: state.todo
     })
+  }, [state.todo])
     // setTodos([...todos, todo]);
     // setTodo('');
-  }
-  const onChange = e => {
+  const onChange = useCallback(e => {
+      dispatch({
+        type: 'SET_TODO',
+        value: e.target.value
+      })
+    }, [])
+
+  const searchHandle = e => {
     dispatch({
-      type: 'SET_TODO',
+      type: 'SET_SEARCH',
       value: e.target.value
     })
   }
+  
+  const filteredTodos = useMemo(() => {
+    return state.todos.filter(todo => todo.toLocalLowerCase('TR').includes(state.search.toLocalLowerCase('TR')));
+  }, [state.todos, state.search])
 
   // const [show, setShow] = useState(false);
 
@@ -57,18 +78,11 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Todos</h1>
-      <form onSubmit={submitHandle}>
-        <input type='text' value={state.todo} onChange={onChange}></input>
-        <button disabled={!state.todo} type='submit'>Ekle</button>
-      </form>
-      <ul>
-        {state.todos.map((todo, index) => (
-          <li key={index}>
-            {todo}
-          </li>
-        ))}
-      </ul>
+      <h1>Todo App</h1>
+      <input type='text' value={state.value} placeholder='Todolarda Ara' onChange={searchHandle} />
+      {state.value}
+      <AddTodo submitHandle={submitHandle} onChange={onChange} todo={state.todo}/>
+      <Todos todos={filteredTodos} />
 
       {/* <h3> {process.env.NODE_ENV} </h3>
       <button onClick={() => setShow(show => !show)}>
